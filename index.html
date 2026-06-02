@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FONDEVE 2026</title>
+  <style>
+    :root {
+      --color-principal: #252c54;
+      --color-principal-hover: #1a1f3a;
+      --color-borde: #5f5f5f;
+      --color-header: #252c54;
+      --color-total: #252c54;
+      --color-success: #3eb807;
+      --color-error: #cc0000;
+      --color-titulo: #ffb71b;
+      --color-dimension: #fff1c8;
+    }
+    * { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; margin: 0; background: #fff; color: #111; }
+    .topbar { background: var(--color-principal); padding: 10px; text-align: center; }
+    .topbar img { height: 60px; }
+    .contenedor { max-width: 1500px; margin: 0 auto; padding: 20px; }
+    .titulo-principal-box { background: var(--color-titulo); color:#111; text-align:center; font-size:28px; font-weight:bold; padding:16px 20px; border-radius:10px; margin-bottom:18px; }
+    .texto-intro { margin-bottom: 10px; line-height: 1.5; }
+    .acciones-superiores { display:flex; justify-content:flex-end; gap:10px; margin-bottom:18px; flex-wrap:wrap; }
+    .bloque-form { background:#fff; border:1px solid #ddd; border-radius:10px; padding:18px; margin-bottom:18px; }
+    .form-row { display:flex; align-items:flex-start; gap:12px; margin-bottom:12px; position:relative; }
+    .form-row label { flex:0 0 220px; max-width:220px; font-weight:bold; padding-top:8px; }
+    .form-row input, .form-row select, .form-row textarea { flex:1; width:100%; padding:8px 10px; font-size:14px; border:1px solid #bbb; border-radius:6px; font-family:Arial, sans-serif; }
+    .readonly { background:#f7f7f7; }
+    .campo-organizacion-wrap { flex:1; display:flex; gap:8px; align-items:flex-start; }
+    .campo-organizacion { position:relative; flex:1; }
+    .btn-limpiar-inline { white-space:nowrap; padding:9px 14px; font-size:13px; border:none; border-radius:6px; cursor:pointer; background:#6c757d; color:#fff; height:37px; }
+    .btn-limpiar-inline:hover { background:#565e64; }
+    #sugerencias { border:1px solid #ccc; border-radius:6px; max-height:220px; overflow-y:auto; display:none; position:absolute; top:42px; left:0; right:0; background:#fff; z-index:999; box-shadow:0 4px 12px rgba(0,0,0,0.12); }
+    #sugerencias div { padding:8px 10px; cursor:pointer; }
+    #sugerencias div:hover { background:#f0f0f0; }
+    table { border-collapse:collapse; width:100%; font-size:14px; }
+    th, td { border:1px solid var(--color-borde); padding:10px 8px; vertical-align:top; }
+    th { background:var(--color-header); color:#fff; text-align:center; font-weight:bold; }
+    .col-dimension { width:18%; }
+    .col-subdimension { width:18%; }
+    .col-ponderacion { width:10%; text-align:center; font-weight:bold; }
+    .col-obtenido { width:12%; text-align:center; }
+    .col-criterio { width:42%; }
+    .celda-dimension { text-align:center; font-weight:bold; vertical-align:middle; line-height:1.45; background:var(--color-dimension); }
+    .select-puntaje { width:100%; min-width:90px; text-align:center; font-weight:bold; font-family:Arial, sans-serif; }
+    .total-row td { background:var(--color-total); color:#fff; font-weight:bold; vertical-align:middle; }
+    .total-puntaje { width:120px; text-align:center; font-weight:bold; padding:8px; border:1px solid #999; border-radius:6px; }
+    .boton { background:var(--color-principal); color:#fff; padding:12px 22px; font-size:15px; border:none; border-radius:6px; cursor:pointer; transition:0.2s ease; }
+    .boton:hover { background:var(--color-principal-hover); }
+    .boton-secundario { background:#6c757d; }
+    .boton-secundario:hover { background:#565e64; }
+    .boton-dorado { background:var(--color-titulo); color:#111; font-weight:bold; }
+    .boton-dorado:hover { background:#e7a200; }
+    .boton:disabled { opacity:.7; cursor:not-allowed; }
+    .boton-loading { display:inline-flex; align-items:center; gap:10px; }
+    .spinner { width:16px; height:16px; border:2px solid rgba(255,255,255,.5); border-top-color:#fff; border-radius:50%; animation:spin .8s linear infinite; display:none; }
+    .spinner-grande { width:34px; height:34px; border:4px solid rgba(255,255,255,.35); border-top-color:#fff; border-radius:50%; animation:spin .8s linear infinite; margin:0 auto 16px auto; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .centrado { text-align:center; }
+    .aviso { padding:10px; text-align:center; font-weight:bold; border-radius:8px; margin:10px auto 20px auto; max-width:900px; }
+    .nota { font-size:13px; line-height:1.45; }
+    .modal-fondo { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:9999; justify-content:center; align-items:center; padding:20px; }
+    .modal-contenido { background:#fff; padding:28px; border-radius:10px; max-width:780px; width:100%; box-shadow:0 6px 18px rgba(0,0,0,.25); max-height:85vh; overflow-y:auto; }
+    .modal-contenido h3 { margin-top:0; margin-bottom:14px; }
+    .modal-exito h3 { color:var(--color-success); }
+    .modal-error h3 { color:var(--color-error); }
+    .modal-criterios h3 { color:var(--color-principal); }
+    .modal-enviando .modal-contenido { max-width:420px; text-align:center; background:var(--color-principal); color:#fff; }
+    .modal-enviando h3 { color:#fff; }
+    @media (max-width:900px) {
+      .form-row { flex-direction:column; }
+      .form-row label { width:100%; min-width:100%; max-width:100%; padding-top:0; }
+      .campo-organizacion-wrap { flex-direction:column; }
+      table { font-size:13px; }
+      .acciones-superiores { justify-content:center; }
+      .select-puntaje { min-width:unset; }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <img src="https://www.municipalidadmaipu.cl/img/escudo_maipu.32d4bc5a.png" alt="Logo Maipú">
+  </div>
+
+  <div class="contenedor">
+    <div id="aviso-plazo" class="aviso"></div>
+
+    <div class="titulo-principal-box">PAUTA DE EVALUACIÓN SUBVENCIONES FONDEVE 2026</div>
+
+    <p class="texto-intro">
+      La pauta de evaluación considera tres dimensiones y ocho subdimensiones. La escala de evaluación es de <strong>1 a 4</strong> y la tabla usa ponderaciones.
+    </p>
+
+    <div class="acciones-superiores">
+      <a href="https://immaipu-my.sharepoint.com/personal/carolina_gonzalez_maipu_cl/_layouts/15/guestaccess.aspx?share=IQACHPqA8GP1TK4E6xXir4HuAV6hGKNotQUtOf-f3OlIzi8&e=1MtETj" target="_blank">
+        <button type="button" class="boton boton-dorado">Bases FONDEVE</button>
+      </a>
+      <a href="https://immaipu-my.sharepoint.com/personal/simon_arteaga_maipu_cl/_layouts/15/guestaccess.aspx?share=IgBhpKzZZONrT411IWUgbOb1ARLDS94gMYfrJR0OEVfPH5E&e=pfJNfi&xsdata=MDV8MDJ8Y2Fyb2xpbmEuZ29uemFsZXpAbWFpcHUuY2x8NjhhZTk1Mjg5OGI2NDE1NjNhZjkwOGRlYzBjNmUxYzN8NzI1NGI4Y2QyZjhhNDZkZmJiYjU5YmQ3ZGY0MTUzYmF8MHwwfDYzOTE2MDE1ODIwMDYwNDk4NHxVbmtub3dufFRXRnBiR1pzYjNkOGV5SkZiWEIwZVUxaGNHa2lPblJ5ZFdVc0lsWWlPaUl3TGpBdU1EQXdNQ0lzSWxBaU9pSlhhVzR6TWlJc0lrRk9Jam9pVFdGcGJDSXNJbGRVSWpveWZRPT18MHx8fA%3d%3d&sdata=cS9DbDlhcXYxK0VlaGhOWkhpRjNZVUk0ajloODVTdzRhWnJrVWNxdXV6VT0%3d" target="_blank">
+        <button type="button" class="boton boton-dorado">Proyectos a revisar</button>
+      </a>
+      <button type="button" class="boton boton-secundario" onclick="mostrarModal('modalCriterios')">Ver criterios de evaluación</button>
+    </div>
+
+    <form id="formulario" onsubmit="enviarFormulario(); return false;">
+      <div class="bloque-form">
+        <div class="form-row">
+          <label for="tipoEvaluador">Tipo de evaluador:</label>
+          <select id="tipoEvaluador">
+            <option value="">-- Seleccione --</option>
+            <option value="UNIDAD_TECNICA">Unidad técnica pertinente al tipo de proyecto y área de postulación</option>
+            <option value="CONCEJALES">Concejales Comisión Social y Finanzas</option>
+            <option value="DOC">Departamento de Organizaciones Comunitarias</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label for="evaluador">Nombre evaluador/a:</label>
+          <input type="text" id="evaluador">
+        </div>
+
+        <div class="form-row">
+          <label for="areaFiltro">Área:</label>
+          <select id="areaFiltro" onchange="filtrarOrganizaciones()">
+            <option value="">-- Todas --</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label for="barrioFiltro">Barrio:</label>
+          <select id="barrioFiltro" onchange="filtrarOrganizaciones()">
+            <option value="">-- Todos --</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label for="organizacion">Nombre organización:</label>
+          <div class="campo-organizacion-wrap">
+            <div class="campo-organizacion">
+              <input type="text" id="organizacion" oninput="filtrarOrganizaciones()" autocomplete="off">
+              <div id="sugerencias"></div>
+            </div>
+            <button type="button" class="btn-limpiar-inline" onclick="limpiarSeleccionProyecto()">Borrar selección</button>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label for="barrio">Barrio seleccionado:</label>
+          <input type="text" id="barrio" class="readonly" readonly>
+        </div>
+
+        <div class="form-row">
+          <label for="rut">RUT:</label>
+          <input type="text" id="rut" class="readonly" readonly>
+        </div>
+
+        <div class="form-row">
+          <label for="tipologia">Tipología:</label>
+          <textarea id="tipologia" class="readonly" rows="2" readonly></textarea>
+        </div>
+
+        <div class="form-row">
+          <label for="enfoque">Enfoque:</label>
+          <input type="text" id="enfoque" class="readonly" readonly>
+        </div>
+
+        <div class="form-row">
+          <label for="area">Área:</label>
+          <input type="text" id="area" class="readonly" readonly>
+        </div>
+
+        <div class="form-row">
+          <label for="montoSolicitado">Monto solicitado al municipio:</label>
+          <input type="text" id="montoSolicitado" class="readonly" readonly>
+        </div>
+
+        <input type="hidden" id="idProyecto">
+        <input type="hidden" id="nProyecto">
+        <input type="hidden" id="montoSolicitadoRaw">
+      </div>
+
+      <div class="bloque-form">
+        <table>
+          <tr>
+            <th class="col-dimension">DIMENSIÓN EVALUADA</th>
+            <th class="col-subdimension">SUBDIMENSIÓN</th>
+            <th class="col-ponderacion">PONDERACIÓN</th>
+            <th class="col-obtenido">PUNTAJE ASIGNADO</th>
+            <th class="col-criterio">CRITERIO</th>
+          </tr>
+
+          <tr><td rowspan="3" class="celda-dimension">Pertinencia técnica de la propuesta</td><td>Identificación del problema</td><td class="col-ponderacion">15</td><td><select id="identificacionProblema" class="select-puntaje" onchange="calcularPuntaje()"><option value="">--</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></td><td>La organización identifica un problema o necesidad comunitaria relevante, claramente descrita y susceptible de ser abordada mediante alguna de las tipologías definidas en las bases.</td></tr>
+          <tr><td>Definición de objetivo o solución</td><td class="col-ponderacion">15</td><td><select id="definicionObjetivo" class="select-puntaje" onchange="calcularPuntaje()"><option value="">--</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></td><td>El objetivo y/o la solución propuesta es coherente con el problema identificado, orientando un abordaje efectivo.</td></tr>
+          <tr><td>Propuesta u objeto de intervención específico</td><td class="col-ponderacion">10</td><td><select id="propuestaIntervencion" class="select-puntaje" onchange="calcularPuntaje()"><option value="">--</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></td><td>La propuesta u objeto de intervención responde al objetivo definido y contribuye de manera efectiva a la resolución del problema identificado.</td></tr>
+          <tr><td rowspan="3" class="celda-dimension">Coherencia económica del proyecto</td><td>Programación</td><td class="col-ponderacion">10</td><td><select id="programacion" class="select-puntaje" onchange="calcularPuntaje()"><option value="">--</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></td><td>Las actividades programadas en la carta Gantt son coherentes con la propuesta u objeto de intervención y con los plazos definidos.</td></tr>
+          <tr><td>Presupuesto</td><td class="col-ponderacion">10</td><td><select id="presupuesto" class="select-puntaje" onchange="calcularPuntaje()"><option value="">--</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></td><td>El presupuesto del proyecto se ajusta de manera coherente y razonable a la propuesta u objeto de intervención y a las actividades definidas.</td></tr>
+          <tr><td>Aportes adicionales</td><td class="col-ponderacion">10</td><td><select id="aportesAdicionales" class="select-puntaje" onchange="calcularPuntaje()"><option value="">--</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></td><td>La propuesta considera aportes propios de la organización y/o de terceros, debidamente identificados y coherentes con el proyecto.</td></tr>
+          <tr><td rowspan="2" class="celda-dimension">Dimensión social de la iniciativa</td><td>Participación</td><td class="col-ponderacion">20</td><td><select id="participacion" class="select-puntaje" onchange="calcularPuntaje()"><option value="">--</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></td><td>Propuesta contempla mecanismos de participación comunitaria orientados a un público objetivo de niñeces, jóvenes y/o personas mayores.</td></tr>
+          <tr><td>Justificación del enfoque</td><td class="col-ponderacion">10</td><td><select id="justificacionEnfoque" class="select-puntaje" onchange="calcularPuntaje()"><option value="">--</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></td><td>La propuesta incorpora de manera pertinente y coherente uno de los enfoques transversales definidos en las bases.</td></tr>
+
+          <tr class="total-row">
+            <td colspan="2" class="centrado">TOTAL</td>
+            <td class="centrado">32</td>
+            <td class="centrado"><input type="number" id="puntajeBruto32" class="total-puntaje" readonly></td>
+            <td class="nota">Puntaje técnico máximo: <strong>32</strong>.</td>
+          </tr>
+        </table>
+
+        <div style="margin-top:12px; display:flex; gap:16px; flex-wrap:wrap;">
+          <div>
+            <label for="porcentajePonderado" style="font-weight:bold; display:block; margin-bottom:4px;">
+              Porcentaje ponderado (máx. 100). Puntaje de corte: 75 pts.
+            </label>
+            <input type="number" id="porcentajePonderado" class="total-puntaje readonly" readonly>
+          </div>
+        </div>
+      </div>
+
+      <div class="bloque-form">
+        <div class="form-row">
+          <label for="observaciones">Observaciones generales:</label>
+          <textarea id="observaciones" rows="5"></textarea>
+        </div>
+
+        <div class="centrado">
+          <button type="submit" id="btnEnviar" class="boton">
+            <span class="boton-loading">
+              <span id="spinnerBtn" class="spinner"></span>
+              <span id="textoBtn">Enviar evaluación</span>
+            </span>
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div id="modalExito" class="modal-fondo">
+    <div class="modal-contenido modal-exito">
+      <h3>✔ Evaluación registrada</h3>
+      <p>La evaluación fue guardada correctamente.</p>
+      <div class="centrado"><button type="button" class="boton" onclick="cerrarModal('modalExito')">Aceptar</button></div>
+    </div>
+  </div>
+
+  <div id="modalError" class="modal-fondo">
+    <div class="modal-contenido modal-error">
+      <h3>❌ Error</h3>
+      <p id="mensajeError">Ocurrió un problema.</p>
+      <div class="centrado"><button type="button" class="boton" onclick="cerrarModal('modalError')">Cerrar</button></div>
+    </div>
+  </div>
+
+  <div id="modalCriterios" class="modal-fondo">
+    <div class="modal-contenido modal-criterios">
+      <h3>PAUTA DE EVALUACIÓN</h3>
+      <p>La escala de evaluación es de 1 a 4, común a todos los criterios:</p>
+      <ul>
+        <li><strong>1:</strong> criterio no cumplido, inexistente o que no responde a lo solicitado.</li>
+        <li><strong>2:</strong> cumplimiento insuficiente, con debilidades relevantes de claridad, coherencia o pertinencia.</li>
+        <li><strong>3:</strong> cumplimiento adecuado, correctamente desarrollado y que responde a lo requerido.</li>
+        <li><strong>4:</strong> cumplimiento muy adecuado, con formulación clara, consistente y bien fundamentada.</li>
+      </ul>
+      <p>La tabla usa ponderaciones, por lo que el sistema calcula automáticamente el porcentaje ponderado final sobre 100 y también el puntaje bruto sobre 32.</p>
+      <div class="centrado" style="margin-top:16px;"><button type="button" class="boton" onclick="cerrarModal('modalCriterios')">Cerrar</button></div>
+    </div>
+  </div>
+
+  <div id="modalEnviando" class="modal-fondo modal-enviando">
+    <div class="modal-contenido">
+      <div class="spinner-grande"></div>
+      <h3>Enviando evaluación</h3>
+      <p>Por favor espera. No cierres ni modifiques el formulario mientras se guardan los datos.</p>
+    </div>
+  </div>
+
+  <script>
+    const APPS_SCRIPT_WEBAPP_URL = 'REEMPLAZAR_POR_TU_URL_DE_WEBAPP';
+
+    let proyectos = [];
+    let enviando = false;
+    let organizacionBloqueada = false;
+
+    const CAMPOS = [
+      { id: "identificacionProblema", peso: 15 },
+      { id: "definicionObjetivo", peso: 15 },
+      { id: "propuestaIntervencion", peso: 10 },
+      { id: "programacion", peso: 10 },
+      { id: "presupuesto", peso: 10 },
+      { id: "aportesAdicionales", peso: 10 },
+      { id: "participacion", peso: 20 },
+      { id: "justificacionEnfoque", peso: 10 }
+    ];
+
+    function formatearCLP(valor) {
+      const n = Number(valor || 0);
+      if (!Number.isFinite(n)) return '';
+      return '$' + n.toLocaleString('es-CL');
+    }
+
+    async function apiGetProyectos() {
+      const r = await fetch(`${APPS_SCRIPT_WEBAPP_URL}?api=proyectos`);
+      const data = await r.json();
+      if (!data.ok) throw new Error(data.error || 'No se pudieron cargar los proyectos.');
+      return data.proyectos || [];
+    }
+
+    async function apiGuardarEvaluacion(payload) {
+      const r = await fetch(APPS_SCRIPT_WEBAPP_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'guardarEvaluacion',
+          data: payload
+        })
+      });
+      const data = await r.json();
+      if (!data.ok) throw new Error(data.error || 'No se pudo guardar la evaluación.');
+      return data;
+    }
+
+    function poblarFiltros() {
+      const barrioSel = document.getElementById("barrioFiltro");
+      const areaSel = document.getElementById("areaFiltro");
+
+      const barrios = [...new Set(proyectos.map(p => p.barrio).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));
+      const areas = [...new Set(proyectos.map(p => p.area).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));
+
+      barrioSel.innerHTML = '<option value="">-- Todos --</option>';
+      areaSel.innerHTML = '<option value="">-- Todas --</option>';
+
+      barrios.forEach(b => {
+        const op = document.createElement("option");
+        op.value = b;
+        op.textContent = b;
+        barrioSel.appendChild(op);
+      });
+
+      areas.forEach(a => {
+        const op = document.createElement("option");
+        op.value = a;
+        op.textContent = a;
+        areaSel.appendChild(op);
+      });
+    }
+
+    async function cargarDatosIniciales() {
+      try {
+        proyectos = await apiGetProyectos();
+        poblarFiltros();
+      } catch (error) {
+        mostrarError(error.message || 'No se pudieron cargar los proyectos.');
+      }
+    }
+
+    function filtrarOrganizaciones() {
+      if (organizacionBloqueada) return;
+
+      const input = document.getElementById("organizacion");
+      const sugerenciasDiv = document.getElementById("sugerencias");
+      const barrioFiltro = document.getElementById("barrioFiltro").value;
+      const areaFiltro = document.getElementById("areaFiltro").value;
+
+      sugerenciasDiv.innerHTML = "";
+      sugerenciasDiv.style.display = "none";
+
+      const texto = (input.value || "").trim().toLowerCase();
+
+      let resultados = proyectos.slice();
+      if (barrioFiltro) resultados = resultados.filter(p => p.barrio === barrioFiltro);
+      if (areaFiltro) resultados = resultados.filter(p => p.area === areaFiltro);
+      if (texto) resultados = resultados.filter(p => (p.nombre || "").toLowerCase().includes(texto));
+
+      resultados = resultados.slice(0, 40);
+      if (!resultados.length) return;
+
+      resultados.forEach(proy => {
+        const div = document.createElement("div");
+        div.textContent = `${proy.nombre} (${proy.area || 'SIN ÁREA'} / ${proy.barrio || 'SIN BARRIO'})`;
+        div.onclick = function() { seleccionarProyecto(proy); };
+        sugerenciasDiv.appendChild(div);
+      });
+
+      sugerenciasDiv.style.display = "block";
+    }
+
+    function seleccionarProyecto(proy) {
+      document.getElementById("organizacion").value = proy.nombre || "";
+      document.getElementById("idProyecto").value = proy.idProyecto || "";
+      document.getElementById("nProyecto").value = proy.n || "";
+      document.getElementById("rut").value = proy.rut || "";
+      document.getElementById("barrio").value = proy.barrio || "";
+      document.getElementById("tipologia").value = proy.tipologia || "";
+      document.getElementById("enfoque").value = proy.enfoque || "";
+      document.getElementById("area").value = proy.area || "";
+      document.getElementById("montoSolicitado").value = formatearCLP(proy.montoSolicitado);
+      document.getElementById("montoSolicitadoRaw").value = proy.montoSolicitado || "";
+      document.getElementById("barrioFiltro").value = proy.barrio || "";
+      document.getElementById("areaFiltro").value = proy.area || "";
+
+      document.getElementById("organizacion").readOnly = true;
+      document.getElementById("barrioFiltro").disabled = true;
+      document.getElementById("areaFiltro").disabled = true;
+      organizacionBloqueada = true;
+
+      document.getElementById("sugerencias").style.display = "none";
+      document.getElementById("sugerencias").innerHTML = "";
+    }
+
+    function limpiarSeleccionProyecto() {
+      document.getElementById("organizacion").value = "";
+      document.getElementById("idProyecto").value = "";
+      document.getElementById("nProyecto").value = "";
+      document.getElementById("rut").value = "";
+      document.getElementById("barrio").value = "";
+      document.getElementById("tipologia").value = "";
+      document.getElementById("enfoque").value = "";
+      document.getElementById("area").value = "";
+      document.getElementById("montoSolicitado").value = "";
+      document.getElementById("montoSolicitadoRaw").value = "";
+      document.getElementById("organizacion").readOnly = false;
+      document.getElementById("barrioFiltro").disabled = false;
+      document.getElementById("areaFiltro").disabled = false;
+      document.getElementById("sugerencias").style.display = "none";
+      document.getElementById("sugerencias").innerHTML = "";
+      organizacionBloqueada = false;
+    }
+
+    function calcularPuntaje() {
+      let bruto = 0;
+      let ponderado = 0;
+
+      CAMPOS.forEach(campo => {
+        const val = parseInt(document.getElementById(campo.id).value, 10);
+        if (!isNaN(val)) {
+          bruto += val;
+          ponderado += (val / 4) * campo.peso;
+        }
+      });
+
+      document.getElementById("puntajeBruto32").value = bruto ? bruto : "";
+      document.getElementById("porcentajePonderado").value = ponderado ? Math.round(ponderado * 100) / 100 : "";
+    }
+
+    function setEstadoBoton(enProceso) {
+      enviando = enProceso;
+      const boton = document.getElementById("btnEnviar");
+      const texto = document.getElementById("textoBtn");
+      const spinner = document.getElementById("spinnerBtn");
+      boton.disabled = enProceso;
+      texto.textContent = enProceso ? "Enviando..." : "Enviar evaluación";
+      spinner.style.display = enProceso ? "inline-block" : "none";
+    }
+
+    function obtenerDatosFormulario() {
+      return {
+        tipoEvaluador: document.getElementById("tipoEvaluador").value,
+        evaluador: document.getElementById("evaluador").value.trim(),
+        idProyecto: document.getElementById("idProyecto").value.trim(),
+        n: document.getElementById("nProyecto").value.trim(),
+        nombreOrganizacion: document.getElementById("organizacion").value.trim(),
+        rut: document.getElementById("rut").value.trim(),
+        barrio: document.getElementById("barrio").value.trim(),
+        tipologia: document.getElementById("tipologia").value.trim(),
+        enfoque: document.getElementById("enfoque").value.trim(),
+        area: document.getElementById("area").value.trim(),
+        montoSolicitado: document.getElementById("montoSolicitadoRaw").value.trim(),
+        identificacionProblema: document.getElementById("identificacionProblema").value,
+        definicionObjetivo: document.getElementById("definicionObjetivo").value,
+        propuestaIntervencion: document.getElementById("propuestaIntervencion").value,
+        programacion: document.getElementById("programacion").value,
+        presupuesto: document.getElementById("presupuesto").value,
+        aportesAdicionales: document.getElementById("aportesAdicionales").value,
+        participacion: document.getElementById("participacion").value,
+        justificacionEnfoque: document.getElementById("justificacionEnfoque").value,
+        puntajeBruto32: document.getElementById("puntajeBruto32").value,
+        porcentajePonderado: document.getElementById("porcentajePonderado").value,
+        observaciones: document.getElementById("observaciones").value.trim()
+      };
+    }
+
+    function validarFormulario(datos) {
+      const obligatorios = [
+        ["tipoEvaluador", "Debes seleccionar el tipo de evaluador."],
+        ["evaluador", "Debes ingresar el nombre del evaluador/a."],
+        ["idProyecto", "Debes seleccionar una organización válida desde la lista."],
+        ["nombreOrganizacion", "Debes seleccionar una organización válida desde la lista."]
+      ];
+
+      for (const [campo, mensaje] of obligatorios) {
+        if (!String(datos[campo] || "").trim()) {
+          mostrarError(mensaje);
+          return false;
+        }
+      }
+
+      const proyectoValido = proyectos.find(p =>
+        p.idProyecto === datos.idProyecto &&
+        p.nombre === datos.nombreOrganizacion &&
+        p.rut === datos.rut &&
+        p.barrio === datos.barrio &&
+        p.tipologia === datos.tipologia &&
+        p.enfoque === datos.enfoque &&
+        p.area === datos.area &&
+        String(p.montoSolicitado) === String(datos.montoSolicitado)
+      );
+
+      if (!proyectoValido) {
+        mostrarError("La organización seleccionada no coincide con la base. Borra la selección y vuelve a elegirla desde la lista.");
+        return false;
+      }
+
+      for (const campo of CAMPOS) {
+        if (!String(datos[campo.id] || "").trim()) {
+          mostrarError("Debes completar todas las subdimensiones de la pauta.");
+          return false;
+        }
+      }
+
+      if (!String(datos.porcentajePonderado || "").trim() || !String(datos.puntajeBruto32 || "").trim()) {
+        mostrarError("No se pudo calcular el puntaje.");
+        return false;
+      }
+
+      return true;
+    }
+
+    async function enviarFormulario() {
+      if (enviando) return;
+
+      const datos = obtenerDatosFormulario();
+      if (!validarFormulario(datos)) return;
+
+      setEstadoBoton(true);
+      mostrarModal("modalEnviando");
+
+      try {
+        await apiGuardarEvaluacion(datos);
+        ocultarModal("modalEnviando");
+        setEstadoBoton(false);
+        mostrarModal("modalExito");
+        limpiarFormularioCompleto();
+      } catch (error) {
+        ocultarModal("modalEnviando");
+        setEstadoBoton(false);
+        mostrarError(error.message || "Ocurrió un error al guardar la evaluación.");
+      }
+    }
+
+    function limpiarFormularioCompleto() {
+      document.getElementById("formulario").reset();
+      document.getElementById("puntajeBruto32").value = "";
+      document.getElementById("porcentajePonderado").value = "";
+      limpiarSeleccionProyecto();
+    }
+
+    function mostrarAvisoPlazo() {
+      const aviso = document.getElementById("aviso-plazo");
+      aviso.textContent = "Evaluación Subvenciones FONDEVE 2026.";
+      aviso.style.backgroundColor = "#fff1c8";
+      aviso.style.color = "#6b4c00";
+    }
+
+    function mostrarModal(id) {
+      document.getElementById(id).style.display = "flex";
+    }
+
+    function ocultarModal(id) {
+      document.getElementById(id).style.display = "none";
+    }
+
+    function cerrarModal(id) {
+      if (id === 'modalEnviando') return;
+      document.getElementById(id).style.display = "none";
+    }
+
+    function mostrarError(mensaje) {
+      document.getElementById("mensajeError").textContent = mensaje;
+      mostrarModal("modalError");
+    }
+
+    window.onload = function() {
+      cargarDatosIniciales();
+      mostrarAvisoPlazo();
+    };
+
+    document.addEventListener("click", function(event) {
+      const sugerenciasDiv = document.getElementById("sugerencias");
+      const input = document.getElementById("organizacion");
+      if (!input.contains(event.target) && !sugerenciasDiv.contains(event.target)) {
+        sugerenciasDiv.style.display = "none";
+      }
+    });
+
+    document.getElementById("organizacion").addEventListener("input", function() {
+      if (!this.value.trim()) limpiarSeleccionProyecto();
+    });
+
+    document.getElementById("organizacion").addEventListener("keydown", function(e) {
+      if (e.key === "Escape") document.getElementById("sugerencias").style.display = "none";
+    });
+
+    document.getElementById("organizacion").addEventListener("focus", function() {
+      if (!organizacionBloqueada) filtrarOrganizaciones();
+    });
+  </script>
+</body>
+</html>
